@@ -1,0 +1,1 @@
+ALTER TABLE posts ALTER COLUMN video_url DROP NOT NULL;

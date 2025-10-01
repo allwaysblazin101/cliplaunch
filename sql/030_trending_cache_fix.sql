@@ -1,0 +1,37 @@
+-- === fix: refresh_trending_cache with proper param reference ==================
+
+CREATE OR REPLACE FUNCTION refresh_trending_cache(p_window_hours integer)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  since_ts timestamptz := now() - make_interval(hours => p_window_hours);
+BEGIN
+  -- wipe previous rows for this window
+  DELETE FROM trending_cache tc WHERE tc.window_hours = p_window_hours;
+
+  -- candidates = videos/posts published in window
+  WITH pubs AS (
+    SELECT
+      'video'::text  AS object_type,
+      v.id           AS object_id,
+      v.creator_id   AS creator_id,
+      v.title,
+      v.created_at
+    FROM videos v
+    WHERE v.created_at >= since_ts
+    UNION ALL
+    SELECT
+      'post'::text   AS object_type,
+      p.id           AS object_id,
+      p.user_id      AS creator_id,
+      p.title,
+      p.created_at
+    FROM posts p
+    WHERE p.created_at >= since_ts
+  )
+  INSERT INTO trending_cache (object_type, object_id, creator_id, title, created_at, score, window_hours)
+  SELECT object_type, object_id, creator_id, title, created_at, 1.0, p_window_hours
+  FROM pubs;
+END
+$$;

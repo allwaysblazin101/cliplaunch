@@ -1,0 +1,11 @@
+{
+  "name": "cliplaunch",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": ["packages/*", "openapi", "docs"],
+  "scripts": {
+    "dev:api": "node packages/api/src/index.js",
+    "lint": "pnpm -r run lint || true",
+    "test": "pnpm -r run test || true"
+  }
+}

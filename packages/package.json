@@ -1,0 +1,20 @@
+{
+  "name": "cliplaunch-js",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon --watch src --ext js --exec node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^8.5.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.29.1",
+    "pg": "^8.16.3",
+    "zod": "^3.25.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
