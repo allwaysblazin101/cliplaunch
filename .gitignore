@@ -1,0 +1,27 @@
+# node / pnpm
+node_modules/
+**/node_modules/
+.pnpm-store/
+.pnpm/
+.npm/
+dist/
+build/
+coverage/
+
+# env & secrets
+.env
+.env.*
+*.local
+
+# logs & tmp
+*.log
+logs/
+tmp/
+*.pid
+*.seed
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
