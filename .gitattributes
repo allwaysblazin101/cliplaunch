@@ -1,0 +1,3 @@
+* text=auto eol=lf
+*.sql diff=sql
+*.sh  linguist-language=Shell
