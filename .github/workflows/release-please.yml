@@ -1,0 +1,28 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: simple
+          package-name: cliplaunch
+          changelog-types: |
+            [
+              {"type":"feat","section":"Features","hidden":false},
+              {"type":"fix","section":"Bug Fixes","hidden":false},
+              {"type":"docs","section":"Docs","hidden":false},
+              {"type":"refactor","section":"Refactor","hidden":false},
+              {"type":"perf","section":"Performance","hidden":false},
+              {"type":"ci","section":"CI","hidden":false},
+              {"type":"chore","section":"Chores","hidden":false}
+            ]
