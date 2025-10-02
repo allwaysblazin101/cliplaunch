@@ -27,7 +27,7 @@ export default async function creators(app) {
   });
 
   // Read a creator by handle (stub)
-  app.get('/v1/creators/:handle', async (req) => {
+  app.get('/v1/creators/:handle', async (_req) => {
     const { handle } = req.params;
     return {
       creator: {

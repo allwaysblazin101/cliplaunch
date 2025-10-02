@@ -1,12 +1,12 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
 
 jobs:
-  e2e:
+  build-test:
     runs-on: ubuntu-latest
 
     services:
@@ -21,7 +21,7 @@ jobs:
           --health-cmd="pg_isready -U cliplaunch"
           --health-interval=5s
           --health-timeout=5s
-          --health-retries=20
+          --health-retries=30
 
     env:
       DATABASE_URL: postgres://cliplaunch:beams@localhost:5432/cliplaunch
@@ -32,7 +32,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - uses: pnpm/action-setup@v4
@@ -42,5 +42,16 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      - name: Run end-to-end regression
+      - name: Migrate DB
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/001_core.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/010_posts_videos.sql
+
+      - name: Lint
+        run: pnpm --filter packages/api lint
+
+      - name: Typecheck
+        run: pnpm --filter packages/api typecheck
+
+      - name: Smoke (end-to-end)
         run: bash scripts/run_regression.sh

@@ -11,3 +11,22 @@ Fastify API + Postgres schema for posts, videos, and trending.
 
 ## Scripts
 See `/scripts` for smoketests, seeders, and demo flows.
+
+## Environment
+
+| Var | Default | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | `postgres://cliplaunch:beams@localhost:5432/cliplaunch` | Postgres DSN |
+| `PUB32` | `1111...` | Mock pubkey used by scripts |
+
+## Branch / PR flow
+
+- Feature branches: `feat/...`, `fix/...`, `chore/...`
+- Open PR → CI must be green (lint, types, migrate, smoke)
+- Squash merge to `main`.
+
+## Repo standards
+
+- Node version pinned in `.nvmrc`
+- Keep PRs small; update SQL in idempotent, re-runnable files
+- Run `make smoke` locally before PR if you changed DB/API.

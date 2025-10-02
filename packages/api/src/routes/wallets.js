@@ -1,7 +1,7 @@
 import { query } from '../db.js';
 
 export default async function wallets(app) {
-  app.get('/v1/wallets/:owner', async (req, reply) => {
+  app.get('/v1/wallets/:owner', async (req, _reply) => {
     const { owner } = req.params;
     const rows = await query(
       `SELECT owner, mint, balance
