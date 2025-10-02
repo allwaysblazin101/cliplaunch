@@ -1,3 +1,5 @@
+![CI](https://github.com/allwaysblazin101/cliplaunch/actions/workflows/ci.yml/badge.svg) ![CodeQL](https://github.com/allwaysblazin101/cliplaunch/actions/workflows/codeql.yml/badge.svg)
+
 # Cliplaunch
 
 Fastify API + Postgres schema for posts, videos, and trending.
