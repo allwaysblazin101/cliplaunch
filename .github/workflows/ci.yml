@@ -1,12 +1,38 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches: [ main ]
+  pull_request:
 
 jobs:
-  build-test:
+  lint_types:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (api)
+        run: pnpm --filter api run lint
+
+      - name: Typecheck (api)
+        run: pnpm --filter api run typecheck
+
+  e2e_smoke:
+    name: End-to-end smoke
     runs-on: ubuntu-latest
 
     services:
@@ -16,9 +42,9 @@ jobs:
           POSTGRES_USER: cliplaunch
           POSTGRES_PASSWORD: beams
           POSTGRES_DB: cliplaunch
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
-          --health-cmd="pg_isready -U cliplaunch"
+          --health-cmd="pg_isready -U cliplaunch -d cliplaunch"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=30
@@ -39,19 +65,8 @@ jobs:
         with:
           version: 9
 
-      - name: Install deps
+      - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Migrate DB
-        run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/001_core.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/010_posts_videos.sql
-
-      - name: Lint
-        run: pnpm --filter packages/api lint
-
-      - name: Typecheck
-        run: pnpm --filter packages/api typecheck
-
-      - name: Smoke (end-to-end)
+      - name: Run end-to-end smoke
         run: bash scripts/run_regression.sh
