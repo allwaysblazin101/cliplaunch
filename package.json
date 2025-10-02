@@ -1,11 +1,16 @@
 {
-  "name": "cliplaunch",
+  "name": "cliplaunch-root",
   "private": true,
   "packageManager": "pnpm@9.0.0",
-  "workspaces": ["packages/*", "openapi", "docs"],
   "scripts": {
-    "dev:api": "node packages/api/src/index.js",
-    "lint": "pnpm -r run lint || true",
-    "test": "pnpm -r run test || true"
+    "lint": "pnpm -F api lint",
+    "typecheck": "pnpm -F api typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.19",
+    "@typescript-eslint/eslint-plugin": "7",
+    "@typescript-eslint/parser": "7",
+    "eslint": "9",
+    "typescript": "5"
   }
 }

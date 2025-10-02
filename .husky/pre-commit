@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 
-pnpm run lint -- --max-warnings=0
-pnpm run typecheck
+pnpm --filter api run lint
+pnpm --filter api run typecheck
