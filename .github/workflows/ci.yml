@@ -1,11 +1,14 @@
-name: ci
+name: CI
+
 on:
-  push: { branches: [main] }
+  push:
+    branches: [main]
   pull_request:
 
 jobs:
-  api-smoke:
+  e2e:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16
@@ -15,41 +18,29 @@ jobs:
           POSTGRES_DB: cliplaunch
         ports: ["5432:5432"]
         options: >-
-          --health-cmd="pg_isready -U cliplaunch -d cliplaunch"
-          --health-interval=5s --health-timeout=5s --health-retries=10
+          --health-cmd="pg_isready -U cliplaunch"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
 
     env:
       DATABASE_URL: postgres://cliplaunch:beams@localhost:5432/cliplaunch
-      NODE_ENV: test
+      PUB32: 11111111111111111111111111111111
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Install
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      - name: Migrate SQL (root + package)
-        run: |
-          for f in sql/*.sql; do [ -f "$f" ] && psql "$DATABASE_URL" -f "$f"; done
-          for f in packages/api/sql/*.sql; do [ -f "$f" ] && psql "$DATABASE_URL" -f "$f"; done
-
-      - name: Build (noop) & Start API
-        run: |
-          node packages/api/src/index.js &
-          for i in {1..40}; do
-            curl -fsS http://127.0.0.1:8080/health && break
-            sleep 1
-          done
-
-      - name: Smoke test (seed → trade → feed)
-        env:
-          PUB32: "11111111111111111111111111111111"
-        run: ./scripts/ci_smoke.sh
+      - name: Run end-to-end regression
+        run: bash scripts/run_regression.sh
