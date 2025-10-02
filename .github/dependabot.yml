@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/packages/api"
+    schedule:
+      interval: "weekly"
+    reviewers: ["allwaysblazin101"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers: ["allwaysblazin101"]
