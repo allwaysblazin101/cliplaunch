@@ -1,30 +1,40 @@
--- posts: minimal media object for Cliplaunch
-CREATE TABLE IF NOT EXISTS posts (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  title       text NOT NULL,
-  description text,
-  video_url   text NOT NULL,
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
+DO $$
+BEGIN
+  -- Ensure posts table (idempotent)
+  IF to_regclass('public.posts') IS NULL THEN
+    CREATE TABLE public.posts (
+      id         BIGSERIAL PRIMARY KEY,
+      author_id  BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+      body       TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  END IF;
 
-CREATE INDEX IF NOT EXISTS idx_posts_user_created ON posts(user_id, created_at DESC);
+  -- If someone created posts with user_id in another branch, normalize to author_id
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='posts' AND column_name='user_id'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='posts' AND column_name='author_id'
+  ) THEN
+    ALTER TABLE public.posts RENAME COLUMN user_id TO author_id;
+  END IF;
 
--- comments (optional for later UI)
-CREATE TABLE IF NOT EXISTS post_comments (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id     uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body        text NOT NULL,
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_post_comments_post_created ON post_comments(post_id, created_at DESC);
-
--- likes (reactions)
-CREATE TABLE IF NOT EXISTS post_likes (
-  post_id   uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-  user_id   uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (post_id, user_id)
-);
+  -- Preferred index on (author_id, created_at)
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='posts' AND column_name='author_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS posts_author_created_idx
+      ON public.posts (author_id, created_at DESC);
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='posts' AND column_name='user_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS posts_user_created_idx
+      ON public.posts (user_id, created_at DESC);
+  ELSE
+    RAISE NOTICE 'posts has neither author_id nor user_id; skipping index';
+  END IF;
+END $$;

@@ -1,0 +1,43 @@
+-- Seed a deterministic USDC token owned by the system creator.
+-- Tokens table requires several NOT NULL columns; we set explicit values.
+
+DO $$
+DECLARE
+  sys_id uuid := '00000000-0000-0000-0000-000000000001'::uuid;
+BEGIN
+  INSERT INTO public.tokens (
+    id,
+    creator_id,
+    mint,
+    curve,
+    base_token,
+    symbol,
+    decimals,
+    supply_cap,
+    fee_bps_protocol,
+    fee_bps_creator,
+    initial_liquidity_base,
+    initial_liquidity_asset,
+    initial_supply,
+    created_at
+  ) VALUES (
+    gen_random_uuid(),
+    sys_id,
+    'USDC',
+    'cpmm',
+    'USDC',
+    'USDC',
+    6,
+    NULL,   -- or a number if you enforce a cap; NULL is allowed if column is nullable
+    0,      -- fee_bps_protocol (NOT NULL)
+    0,      -- fee_bps_creator  (NOT NULL)
+    0,      -- initial_liquidity_base (NOT NULL)
+    0,      -- initial_liquidity_asset (NOT NULL)
+    0,      -- initial_supply (NOT NULL)
+    now()
+  )
+  ON CONFLICT (mint) DO UPDATE
+    SET creator_id = EXCLUDED.creator_id,
+        decimals   = EXCLUDED.decimals,
+        symbol     = EXCLUDED.symbol;
+END $$;

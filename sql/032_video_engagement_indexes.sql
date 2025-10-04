@@ -1,21 +1,49 @@
--- Unique like per (video,user)
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_indexes WHERE indexname = 'uniq_video_like_user'
-  ) THEN
-    CREATE UNIQUE INDEX uniq_video_like_user
-      ON video_likes(video_id, user_id);
-  END IF;
-END$$;
+  -- video_likes
+  IF to_regclass('public.video_likes') IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='video_likes'
+                 AND column_name='video_id')
+    THEN
+      CREATE INDEX IF NOT EXISTS video_likes_video_id_created_at_idx
+        ON public.video_likes (video_id, created_at DESC);
+    END IF;
 
--- Speed comment lookups & trending aggregation
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_indexes WHERE indexname = 'idx_video_comments_video_created'
-  ) THEN
-    CREATE INDEX idx_video_comments_video_created
-      ON video_comments(video_id, created_at DESC);
+    -- unique like per (video, user) if both cols exist
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='video_likes' AND column_name='video_id'
+    ) AND EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='video_likes' AND column_name='user_id'
+    ) THEN
+      CREATE UNIQUE INDEX IF NOT EXISTS uniq_video_like_user
+        ON public.video_likes (video_id, user_id);
+    END IF;
+  ELSE
+    RAISE NOTICE 'video_likes missing; skipping indexes';
   END IF;
-END$$;
+
+  -- video_comments
+  IF to_regclass('public.video_comments') IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='video_comments'
+                 AND column_name='video_id')
+    THEN
+      CREATE INDEX IF NOT EXISTS video_comments_video_id_created_at_idx
+        ON public.video_comments (video_id, created_at DESC);
+    END IF;
+  END IF;
+
+  -- video_comment_likes
+  IF to_regclass('public.video_comment_likes') IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='video_comment_likes'
+                 AND column_name='video_comment_id')
+    THEN
+      CREATE INDEX IF NOT EXISTS video_comment_likes_comment_id_created_at_idx
+        ON public.video_comment_likes (video_comment_id, created_at DESC);
+    END IF;
+  END IF;
+END $$;
